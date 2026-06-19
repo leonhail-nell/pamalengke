@@ -1,0 +1,32 @@
+{
+  "name": "pamalengke",
+  "version": "2.0.0",
+  "description": "Panabo Public Online Market (Nuxt 4)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "@vee-validate/nuxt": "^4.15.1",
+    "@vueuse/nuxt": "^14.3.0",
+    "dayjs": "^1.11.21",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.16.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "eslint": "^10.5.0",
+    "nuxt": "^4.4.8",
+    "tailwindcss": "^4.3.1"
+  }
+}

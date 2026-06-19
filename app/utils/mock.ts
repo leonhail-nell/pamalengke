@@ -20,10 +20,26 @@ export interface Product {
   slug: string
 }
 
-// Keyword-matched stock photo (LoremFlickr). `lock` keeps the same image
-// for a product across reloads, so e.g. a mango always shows a mango.
-const pic = (keyword: string, lock: number, size = 400) =>
+// Two image sources, chosen per product for accuracy:
+// 1) TheMealDB ingredient photos — clean, white-background, exact match.
+// 2) LoremFlickr single-keyword — for tropical produce/fish MealDB lacks.
+const meal = (name: string, suffix = '') =>
+  `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name)}${suffix}.png`
+
+const flickr = (keyword: string, lock: number, size = 400) =>
   `https://loremflickr.com/${size}/${size}/${keyword}?lock=${lock}`
+
+// Resolve a seed's image spec ("meal:Tomatoes" or "flickr:mango") to 3 sizes.
+function images(spec: string, lock: number) {
+  const [src, key] = spec.split(':')
+  if (src === 'meal') {
+    return { sm: meal(key, '-Small'), md: meal(key, '-Medium'), lg: meal(key) }
+  }
+  return { sm: flickr(key, lock, 200), md: flickr(key, lock, 400), lg: flickr(key, lock, 800) }
+}
+
+// Back-compat helper for orders/vendors below.
+const pic = (keyword: string, lock: number, size = 400) => flickr(keyword, lock, size)
 
 export const mockMenus = [
   {
@@ -85,57 +101,59 @@ export const mockMenus = [
   }
 ]
 
-// Curated catalog: Filipino market name + matching photo keyword + realistic ₱ price.
-interface Seed { name: string; kw: string; price: number; discount?: number; stocks?: number; cat: string; sub: string }
+// Curated catalog. `img` is "meal:<TheMealDB ingredient>" (exact, clean) or
+// "flickr:<keyword>" for tropical produce/fish TheMealDB doesn't have.
+interface Seed { name: string; img: string; price: number; discount?: number; stocks?: number; cat: string; sub: string }
 
 const catalog: Seed[] = [
   // Vegetables
-  { name: 'Pechay Tagalog', kw: 'bok-choy', price: 45, cat: 'vegetables', sub: 'Leafy Greens' },
-  { name: 'Kamatis (Tomato)', kw: 'tomato', price: 60, discount: 10, cat: 'vegetables', sub: 'Vegetables' },
-  { name: 'Talong (Eggplant)', kw: 'eggplant', price: 55, cat: 'vegetables', sub: 'Vegetables' },
-  { name: 'Sibuyas (Red Onion)', kw: 'onion', price: 120, discount: 15, cat: 'vegetables', sub: 'Root Crops' },
-  { name: 'Bawang (Garlic)', kw: 'garlic', price: 140, cat: 'vegetables', sub: 'Root Crops' },
-  { name: 'Karot (Carrot)', kw: 'carrot', price: 80, cat: 'vegetables', sub: 'Root Crops' },
-  { name: 'Pipino (Cucumber)', kw: 'cucumber', price: 50, cat: 'vegetables', sub: 'Vegetables' },
-  { name: 'Repolyo (Cabbage)', kw: 'cabbage', price: 65, discount: 20, cat: 'vegetables', sub: 'Leafy Greens' },
-  { name: 'Kalabasa (Squash)', kw: 'squash,pumpkin', price: 40, cat: 'vegetables', sub: 'Vegetables' },
-  { name: 'Patatas (Potato)', kw: 'potato', price: 90, cat: 'vegetables', sub: 'Root Crops' },
-  { name: 'Ampalaya (Bitter Gourd)', kw: 'bitter-gourd', price: 70, cat: 'vegetables', sub: 'Vegetables' },
-  { name: 'Okra', kw: 'okra', price: 35, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Pechay (Pak Choi)', img: 'flickr:pak-choi', price: 45, cat: 'vegetables', sub: 'Leafy Greens' },
+  { name: 'Kamatis (Tomato)', img: 'meal:Tomatoes', price: 60, discount: 10, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Talong (Eggplant)', img: 'meal:Aubergine', price: 55, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Sibuyas (Onion)', img: 'meal:Onion', price: 120, discount: 15, cat: 'vegetables', sub: 'Root Crops' },
+  { name: 'Bawang (Garlic)', img: 'meal:Garlic', price: 140, cat: 'vegetables', sub: 'Root Crops' },
+  { name: 'Karot (Carrots)', img: 'meal:Carrots', price: 80, cat: 'vegetables', sub: 'Root Crops' },
+  { name: 'Pipino (Cucumber)', img: 'meal:Cucumber', price: 50, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Repolyo (Cabbage)', img: 'meal:Cabbage', price: 65, discount: 20, cat: 'vegetables', sub: 'Leafy Greens' },
+  { name: 'Kalabasa (Squash)', img: 'meal:Pumpkin', price: 40, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Patatas (Potato)', img: 'meal:Potatoes', price: 90, cat: 'vegetables', sub: 'Root Crops' },
+  { name: 'Ampalaya (Bitter Gourd)', img: 'flickr:bitter-melon', price: 70, cat: 'vegetables', sub: 'Vegetables' },
+  { name: 'Okra', img: 'flickr:okra', price: 35, cat: 'vegetables', sub: 'Vegetables' },
   // Fruits
-  { name: 'Mangga Carabao (Mango)', kw: 'mango', price: 150, discount: 10, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Saging Lakatan (Banana)', kw: 'banana', price: 70, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Papaya', kw: 'papaya', price: 55, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Pinya (Pineapple)', kw: 'pineapple', price: 80, discount: 15, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Bayabas (Guava)', kw: 'guava', price: 60, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Pakwan (Watermelon)', kw: 'watermelon', price: 95, cat: 'fruits', sub: 'Tropical' },
-  { name: 'Ponkan (Orange)', kw: 'orange,citrus', price: 110, cat: 'fruits', sub: 'Citrus' },
-  { name: 'Kalamansi', kw: 'calamansi,lime', price: 50, discount: 10, cat: 'fruits', sub: 'Citrus' },
+  { name: 'Mangga Carabao (Mango)', img: 'flickr:mango', price: 150, discount: 10, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Saging Lakatan (Banana)', img: 'meal:Banana', price: 70, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Papaya', img: 'flickr:papaya', price: 55, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Pinya (Pineapple)', img: 'flickr:pineapple', price: 80, discount: 15, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Bayabas (Guava)', img: 'flickr:guava', price: 60, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Pakwan (Watermelon)', img: 'flickr:watermelon', price: 95, cat: 'fruits', sub: 'Tropical' },
+  { name: 'Ponkan (Orange)', img: 'meal:Orange', price: 110, cat: 'fruits', sub: 'Citrus' },
+  { name: 'Kalamansi (Lime)', img: 'meal:Lime', price: 50, discount: 10, cat: 'fruits', sub: 'Citrus' },
   // Meat
-  { name: 'Liempo (Pork Belly)', kw: 'pork-belly', price: 320, discount: 10, cat: 'meat', sub: 'Pork' },
-  { name: 'Baboy Giniling (Ground Pork)', kw: 'ground-pork,minced-meat', price: 280, cat: 'meat', sub: 'Pork' },
-  { name: 'Pork Spareribs', kw: 'pork-ribs', price: 300, cat: 'meat', sub: 'Pork' },
-  { name: 'Manok (Whole Chicken)', kw: 'chicken,poultry', price: 200, discount: 15, cat: 'meat', sub: 'Chicken' },
-  { name: 'Chicken Wings', kw: 'chicken-wings', price: 180, cat: 'meat', sub: 'Chicken' },
+  { name: 'Liempo (Pork Belly)', img: 'meal:Pork', price: 320, discount: 10, cat: 'meat', sub: 'Pork' },
+  { name: 'Baboy Giniling (Ground Pork)', img: 'meal:Minced Pork', price: 280, cat: 'meat', sub: 'Pork' },
+  { name: 'Pork Spareribs', img: 'flickr:pork-ribs', price: 300, cat: 'meat', sub: 'Pork' },
+  { name: 'Manok (Whole Chicken)', img: 'meal:Chicken', price: 200, discount: 15, cat: 'meat', sub: 'Chicken' },
+  { name: 'Chicken Breast', img: 'meal:Chicken Breast', price: 180, cat: 'meat', sub: 'Chicken' },
   // Seafood
-  { name: 'Bangus (Milkfish)', kw: 'fish,milkfish', price: 220, discount: 10, cat: 'seafood', sub: 'Fish' },
-  { name: 'Tilapia', kw: 'tilapia,fish', price: 140, cat: 'seafood', sub: 'Fish' },
-  { name: 'Galunggong', kw: 'mackerel,fish', price: 160, cat: 'seafood', sub: 'Fish' },
-  { name: 'Hipon (Shrimp)', kw: 'shrimp,prawn', price: 380, discount: 20, cat: 'seafood', sub: 'Shellfish' },
-  { name: 'Pusit (Squid)', kw: 'squid', price: 290, cat: 'seafood', sub: 'Shellfish' },
-  { name: 'Tahong (Mussels)', kw: 'mussels', price: 120, cat: 'seafood', sub: 'Shellfish' },
+  { name: 'Bangus (Milkfish)', img: 'flickr:milkfish', price: 220, discount: 10, cat: 'seafood', sub: 'Fish' },
+  { name: 'Tilapia', img: 'flickr:tilapia', price: 140, cat: 'seafood', sub: 'Fish' },
+  { name: 'Galunggong', img: 'flickr:mackerel', price: 160, cat: 'seafood', sub: 'Fish' },
+  { name: 'Hipon (Shrimp)', img: 'meal:Prawns', price: 380, discount: 20, cat: 'seafood', sub: 'Shellfish' },
+  { name: 'Pusit (Squid)', img: 'meal:Squid', price: 290, cat: 'seafood', sub: 'Shellfish' },
+  { name: 'Tahong (Mussels)', img: 'meal:Mussels', price: 120, cat: 'seafood', sub: 'Shellfish' },
   // Rice & Grains
-  { name: 'Bigas Sinandomeng (Rice 5kg)', kw: 'rice,grain', price: 320, cat: 'rice-grains', sub: 'Rice' },
-  { name: 'Bigas Dinorado (Rice 5kg)', kw: 'rice-bag', price: 350, discount: 10, cat: 'rice-grains', sub: 'Rice' },
-  { name: 'Malagkit (Glutinous Rice 1kg)', kw: 'glutinous-rice', price: 85, cat: 'rice-grains', sub: 'Rice' },
+  { name: 'Bigas Sinandomeng (Rice 5kg)', img: 'meal:Rice', price: 320, cat: 'rice-grains', sub: 'Rice' },
+  { name: 'Bigas Dinorado (Rice 5kg)', img: 'meal:Rice', price: 350, discount: 10, cat: 'rice-grains', sub: 'Rice' },
+  { name: 'Malagkit (Glutinous Rice 1kg)', img: 'flickr:glutinous-rice', price: 85, cat: 'rice-grains', sub: 'Rice' },
   // Basics
-  { name: 'Itlog (Eggs, tray)', kw: 'eggs', price: 230, discount: 5, cat: 'basics', sub: 'Eggs & Dairy' },
-  { name: 'Gatas (Fresh Milk 1L)', kw: 'milk', price: 95, cat: 'basics', sub: 'Eggs & Dairy' }
+  { name: 'Itlog (Eggs, tray)', img: 'meal:Eggs', price: 230, discount: 5, cat: 'basics', sub: 'Eggs & Dairy' },
+  { name: 'Gatas (Fresh Milk 1L)', img: 'meal:Milk', price: 95, cat: 'basics', sub: 'Eggs & Dairy' }
 ]
 
 export const mockProducts: Product[] = catalog.map((s, i) => {
   const discount = s.discount ?? 0
   const stocks = s.stocks ?? (i % 9 === 0 ? 0 : 20 + ((i * 7) % 60))
+  const img = images(s.img, i + 1)
   return {
     id: i + 1,
     vendor_id: (i % 4) + 1,
@@ -144,9 +162,9 @@ export const mockProducts: Product[] = catalog.map((s, i) => {
     discount,
     price: discount > 0 ? Math.round(s.price - (discount / 100) * s.price) : s.price,
     not_discouted_price: s.price,
-    image_md: pic(s.kw, i + 1, 400),
-    image_sm: pic(s.kw, i + 1, 200),
-    image_lg: pic(s.kw, i + 1, 800),
+    image_md: img.md,
+    image_sm: img.sm,
+    image_lg: img.lg,
     stocks,
     sub_category: s.sub,
     sub_category_id: 100 + i,
@@ -174,20 +192,20 @@ export const mockOrders: Order[] = [
   {
     id: 1001, reference: 'PMK-1001', date: '2026-06-15', status: 'Delivered', vendor: 'Panabo Fresh Co.', delivery_charge: 65,
     items: [
-      { name: 'Pechay Tagalog', quantity: 2, price: 45, image: pic('bok-choy', 1, 200) },
-      { name: 'Kamatis (Tomato)', quantity: 3, price: 54, image: pic('tomato', 2, 200) }
+      { name: 'Pechay (Pak Choi)', quantity: 2, price: 45, image: flickr('pak-choi', 1, 200) },
+      { name: 'Kamatis (Tomato)', quantity: 3, price: 54, image: meal('Tomatoes', '-Small') }
     ]
   },
   {
     id: 1002, reference: 'PMK-1002', date: '2026-06-17', status: 'Processing', vendor: 'Bay Seafoods', delivery_charge: 65,
     items: [
-      { name: 'Bangus (Milkfish)', quantity: 1, price: 198, image: pic('fish,milkfish', 26, 200) },
-      { name: 'Hipon (Shrimp)', quantity: 2, price: 304, image: pic('shrimp,prawn', 29, 200) }
+      { name: 'Bangus (Milkfish)', quantity: 1, price: 198, image: flickr('milkfish', 26, 200) },
+      { name: 'Hipon (Shrimp)', quantity: 2, price: 304, image: meal('Prawns', '-Small') }
     ]
   },
   {
     id: 1003, reference: 'PMK-1003', date: '2026-06-18', status: 'Pending', vendor: 'Mindanao Meats', delivery_charge: 65,
-    items: [{ name: 'Liempo (Pork Belly)', quantity: 2, price: 288, image: pic('pork-belly', 21, 200) }]
+    items: [{ name: 'Liempo (Pork Belly)', quantity: 2, price: 288, image: meal('Pork', '-Small') }]
   }
 ]
 

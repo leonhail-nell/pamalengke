@@ -10,7 +10,7 @@
 
     <div v-if="product" class="flex flex-wrap w-full rounded bg-white lg:p-4 p-2">
       <div class="lg:w-1/3 w-full p-2">
-        <img :src="product.image_lg" class="w-full rounded object-cover" :alt="product.name">
+        <img :src="product.image_local || product.image_lg" class="w-full rounded object-cover" :alt="product.name" @error="onError($event, product.image_lg)">
       </div>
       <div class="lg:w-2/3 w-full">
         <div class="w-full bg-greensmoke py-4 px-10 text-white font-bold text-2xl uppercase">{{ product.name }}</div>
@@ -59,6 +59,7 @@ const route = useRoute()
 const cart = useCartStore()
 const popup = usePopupStore()
 const { moneyFormat } = useMoney()
+const { onError } = useImg()
 
 const product = computed(() => mockPromos.find((p) => p.slug === route.params.slug) ?? mockPromos[0] ?? null)
 const related = computed(() => mockPromos.filter((p) => p.slug !== product.value?.slug).slice(0, 4))

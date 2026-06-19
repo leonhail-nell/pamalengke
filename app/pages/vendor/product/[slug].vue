@@ -2,7 +2,7 @@
   <div class="container mx-auto px-4 py-10">
     <div v-if="product" class="flex flex-wrap bg-white rounded-lg shadow-lg overflow-hidden">
       <div class="lg:w-1/2 w-full">
-        <img :src="product.image_lg || product.image_md" class="w-full object-cover h-96" :alt="product.name">
+        <img :src="product.image_local || product.image_lg || product.image_md" class="w-full object-cover h-96" :alt="product.name" @error="onError($event, product.image_lg || product.image_md)">
       </div>
       <div class="lg:w-1/2 w-full p-8">
         <h1 class="text-3xl font-bold text-green-700 uppercase">{{ product.name }}</h1>
@@ -39,6 +39,7 @@ const products = useProductsStore()
 const cart = useCartStore()
 const popup = usePopupStore()
 const { moneyFormat } = useMoney()
+const { onError } = useImg()
 
 // Prefer the product already selected; fall back to mock lookup by slug.
 const product = computed(

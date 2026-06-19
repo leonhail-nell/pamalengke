@@ -12,6 +12,7 @@ export interface Product {
   image_md: string
   image_sm: string
   image_lg: string
+  image_local?: string // optional override: public/products/<slug>.jpg (see README)
   stocks: number
   sub_category?: string
   sub_category_id?: number
@@ -150,10 +151,13 @@ const catalog: Seed[] = [
   { name: 'Gatas (Fresh Milk 1L)', img: 'meal:Milk', price: 95, cat: 'basics', sub: 'Eggs & Dairy' }
 ]
 
+const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
 export const mockProducts: Product[] = catalog.map((s, i) => {
   const discount = s.discount ?? 0
   const stocks = s.stocks ?? (i % 9 === 0 ? 0 : 20 + ((i * 7) % 60))
   const img = images(s.img, i + 1)
+  const slug = slugify(s.name)
   return {
     id: i + 1,
     vendor_id: (i % 4) + 1,
@@ -165,12 +169,16 @@ export const mockProducts: Product[] = catalog.map((s, i) => {
     image_md: img.md,
     image_sm: img.sm,
     image_lg: img.lg,
+    // Local override: drop public/products/<slug>.jpg to control this photo.
+    // Only enabled for the harder-to-match (flickr) items; falls back to remote
+    // automatically when the file isn't present.
+    image_local: s.img.startsWith('flickr:') ? `/products/${slug}.jpg` : undefined,
     stocks,
     sub_category: s.sub,
     sub_category_id: 100 + i,
     category: s.cat.replace('-', ' '),
     category_slug: s.cat,
-    slug: s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    slug
   }
 })
 

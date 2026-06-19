@@ -4,7 +4,7 @@
       <div v-for="(product, i) in items" :key="i" class="flex lg:w-1/4 md:w-1/3 w-1/2 justify-center p-4">
         <div class="flex flex-col justify-between p-3 rounded-lg shadow-lg w-full transition duration-300 hover:bg-green-100 hover:shadow-2xl transform hover:-translate-y-1">
           <div class="rounded relative overflow-hidden">
-            <img :src="product.image_md" loading="lazy" class="w-full rounded cursor-pointer object-cover h-40" @click="openDetail(product)">
+            <img :src="product.image_local || product.image_md" loading="lazy" class="w-full rounded cursor-pointer object-cover h-40" @click="openDetail(product)" @error="onError($event, product.image_md)">
             <div v-if="product.discount > 0" class="ribbon bg-red-600 text-sm font-bold text-white px-4">{{ product.discount + '%' }}</div>
             <p class="uppercase text-sm text-gray-900 font-bold text-center mt-2">{{ product.name }}</p>
           </div>
@@ -53,6 +53,7 @@ const popup = usePopupStore()
 const products = useProductsStore()
 const router = useRouter()
 const { moneyFormat } = useMoney()
+const { onError } = useImg()
 
 const add = (product: Product) => {
   cart.addToBasket(product)
